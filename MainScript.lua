@@ -1,22 +1,23 @@
 -- ╔══════════════════════════════════════════════╗
 -- ║   [DUELS] Murderers VS Sheriffs              ║
--- ║   Main Script — loaded by FluxKeySystem      ║
+-- ║   Powered by Rayfield — sirius.menu/rayfield ║
 -- ╚══════════════════════════════════════════════╝
 
-local UILibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Fluent.lua"))()
+local RayfieldLibrary = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
-local Window = UILibrary:CreateWindow({
-    Title      = "[DUELS] Murderers VS Sheriffs",
-    Subtitle   = "",
-    Size       = UDim2.new(0, 500, 0, 400),
-    ToggleKey  = Enum.KeyCode.P,
-    Theme      = "Teal",
-    Image      = "rbxassetid://92882092628695",
+local Window = RayfieldLibrary:CreateWindow({
+    Name            = "[DUELS] Murderers VS Sheriffs",
+    LoadingTitle    = "FluxGui",
+    LoadingSubtitle = "by Phemonaz",
+    Theme           = "Teal",
+    DisableRayfieldPrompts = false,
+    DisableBuildWarnings   = false,
 })
 
-local GunTab = Window:CreateTab("Gun", "target")
-local Tab3   = Window:CreateTab("UI Settings", "paint")
-GunTab:CreateDivider("🔫  Only Gun")
+local GunTab = Window:CreateTab("Gun",         4483362458)
+local SettingsTab = Window:CreateTab("UI Settings", 4483362458)
+
+GunTab:CreateSection("🔫  Only Gun")
 
 local Players     = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -26,7 +27,7 @@ local mouse       = LocalPlayer:GetMouse()
 
 -- ── Auto Kill All Players ──────────────────────
 do
-    local running     = false
+    local running      = false
     local MAX_DISTANCE = 150
 
     local function inMatch()
@@ -38,9 +39,7 @@ do
         if not backpack then return nil end
         for _, tool in ipairs(backpack:GetChildren()) do
             if tool:IsA("Tool") and tool:FindFirstChild("showBeam") then
-                if tool.showBeam:IsA("RemoteEvent") then
-                    return tool
-                end
+                if tool.showBeam:IsA("RemoteEvent") then return tool end
             end
         end
         return nil
@@ -72,9 +71,10 @@ do
     setupBackpackWatcher()
 
     GunTab:CreateToggle({
-        Text    = "Auto Kill All Players",
-        Default = false,
-        Callback = function(state)
+        Name         = "Auto Kill All Players",
+        CurrentValue = false,
+        Flag         = "AutoKill",
+        Callback     = function(state)
             running = state
             if running then
                 task.spawn(function()
@@ -88,20 +88,18 @@ do
                         if not equippedTool or not equippedTool:FindFirstChild("showBeam") then
                             equipGun()
                         end
-                        local myTeam         = LocalPlayer:GetAttribute("Team")
-                        local closestPlayer  = nil
-                        local shortestDist   = MAX_DISTANCE
+                        local myTeam        = LocalPlayer:GetAttribute("Team")
+                        local closestPlayer = nil
+                        local shortestDist  = MAX_DISTANCE
                         for _, player in ipairs(Players:GetPlayers()) do
-                            if player ~= LocalPlayer then
-                                if player:GetAttribute("Team") ~= myTeam then
-                                    local ec   = player.Character
-                                    local er   = ec and ec:FindFirstChild("HumanoidRootPart")
-                                    if er then
-                                        local d = (er.Position - rootPart.Position).Magnitude
-                                        if d <= MAX_DISTANCE and d < shortestDist then
-                                            shortestDist  = d
-                                            closestPlayer = player
-                                        end
+                            if player ~= LocalPlayer and player:GetAttribute("Team") ~= myTeam then
+                                local ec = player.Character
+                                local er = ec and ec:FindFirstChild("HumanoidRootPart")
+                                if er then
+                                    local d = (er.Position - rootPart.Position).Magnitude
+                                    if d <= MAX_DISTANCE and d < shortestDist then
+                                        shortestDist  = d
+                                        closestPlayer = player
                                     end
                                 end
                             end
@@ -174,8 +172,7 @@ do
         local params = RaycastParams.new()
         params.FilterType = Enum.RaycastFilterType.Exclude
         params.FilterDescendantsInstances = { myCharacter, targetCharacter }
-        local result = Workspace:Raycast(myRoot.Position, targetRoot.Position - myRoot.Position, params)
-        return result == nil
+        return Workspace:Raycast(myRoot.Position, targetRoot.Position - myRoot.Position, params) == nil
     end
 
     local function getClosestToCursor()
@@ -214,8 +211,8 @@ do
         return closest
     end
 
-    local oldIndex
-    oldIndex = hookmetamethod(game, "__index", newcclosure(function(self, key)
+    local oldIndex1
+    oldIndex1 = hookmetamethod(game, "__index", newcclosure(function(self, key)
         if enabled and not checkcaller() and self == mouse and key == "Hit" then
             local target = getClosestToCursor()
             if target then
@@ -223,7 +220,7 @@ do
                 if root then return CFrame.new(root.Position) end
             end
         end
-        return oldIndex(self, key)
+        return oldIndex1(self, key)
     end))
 
     LocalPlayer.CharacterAdded:Connect(function()
@@ -231,8 +228,8 @@ do
         if enabled then equipGun() end
     end)
 
-    local backpack = LocalPlayer:WaitForChild("Backpack")
-    backpack.ChildAdded:Connect(function(child)
+    local bp = LocalPlayer:WaitForChild("Backpack")
+    bp.ChildAdded:Connect(function(child)
         if enabled and child:IsA("Tool") then
             task.wait(0.1)
             equipGun()
@@ -255,9 +252,10 @@ do
     end)
 
     GunTab:CreateToggle({
-        Text    = "Auto Shoot When Visible",
-        Default = false,
-        Callback = function(state)
+        Name         = "Auto Shoot When Visible",
+        CurrentValue = false,
+        Flag         = "AutoShootVisible",
+        Callback     = function(state)
             enabled = state
             if enabled then equipGun() end
         end,
@@ -304,8 +302,8 @@ do
         return closest
     end
 
-    local oldIndex
-    oldIndex = hookmetamethod(game, "__index", newcclosure(function(self, key)
+    local oldIndex2
+    oldIndex2 = hookmetamethod(game, "__index", newcclosure(function(self, key)
         if enabled and not checkcaller() and self == mouse and key == "Hit" then
             local target = getClosestToCursor()
             if target then
@@ -313,29 +311,42 @@ do
                 if root then return CFrame.new(root.Position) end
             end
         end
-        return oldIndex(self, key)
+        return oldIndex2(self, key)
     end))
 
     GunTab:CreateToggle({
-        Text    = "Silent Aim",
-        Default = false,
-        Callback = function(state)
+        Name         = "Silent Aim",
+        CurrentValue = false,
+        Flag         = "SilentAim",
+        Callback     = function(state)
             enabled = state
         end,
     })
 end
 
 -- ── UI Settings Tab ────────────────────────────
-Tab3:CreateDivider("Theme")
-Tab3:CreateDropdown({
-    Text    = "UI Theme",
-    Options = { "Default", "Red", "Green", "Purple", "Cyan", "Blue", "Pink", "Yellow", "Teal", "Magenta", "Orange", "Rose", "Gold" },
-    Default = "Teal",
-    Callback = function(theme) Window:SetTheme(theme) end,
+SettingsTab:CreateSection("Theme")
+
+SettingsTab:CreateDropdown({
+    Name          = "UI Theme",
+    Options       = { "Default", "Red", "Green", "Purple", "Cyan", "Blue", "Pink", "Yellow", "Teal", "Magenta", "Orange", "Rose", "Gold" },
+    CurrentOption = { "Teal" },
+    Flag          = "UITheme",
+    Callback      = function(option)
+        Window:SetTheme(option[1])
+    end,
 })
-Tab3:CreateDivider("UI")
-Tab3:CreateKeybind({
-    Text    = "Toggle UI",
-    Default = Enum.KeyCode.P,
-    Callback = function(key) Window:SetToggleKey(key) end,
+
+SettingsTab:CreateSection("Keybind")
+
+SettingsTab:CreateKeybind({
+    Name           = "Toggle UI",
+    CurrentKeybind = "P",
+    HoldToInteract = false,
+    Flag           = "ToggleKey",
+    Callback       = function(keybind)
+        -- fires when pressed
+    end,
 })
+
+RayfieldLibrary:LoadConfiguration()
